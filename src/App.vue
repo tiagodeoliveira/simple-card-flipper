@@ -3,18 +3,39 @@
     <w-flex justify-center class="pa3">
       <div class="box">
         <w-card shadow>
-          <vue-flip active-click :width="flipWidth" height="300px" v-model="flipped">
+          <vue-flip
+            active-click
+            :width="flipWidth"
+            :height="flipHeight"
+            v-model="flipped"
+          >
             <template v-slot:front>
-              <w-card class="ccard" title="Original" bg-color="brown-light5" color="black" no-border>
+              <w-card
+                class="ccard"
+                title="Question?"
+                bg-color="brown-light5"
+                color="black"
+                no-border
+              >
                 {{ currentOriginal }}
               </w-card>
             </template>
             <template v-slot:back>
-              <w-card class="ccard" title="Translation" bg-color="blue-light1" color="white" no-border>
+              <w-card
+                class="ccard"
+                title="Answer!"
+                bg-color="blue-light1"
+                color="white"
+                no-border
+              >
                 {{ currentTranslation }}
               </w-card>
             </template>
           </vue-flip>
+
+          <w-overlay v-model="flipping" bg-color="rgba(35, 71, 129, 0.7)">
+            <w-progress color="yellow" bg-color="cyan" class="ma1" circle></w-progress>
+          </w-overlay>
 
           <template #actions>
             <w-flex wrap class="text-center">
@@ -32,14 +53,13 @@
                   </w-icon>
                 </a>
 
-                {{ currentIndex + 1 }} / {{items.length}}
+                {{ currentIndex + 1 }} / {{ items.length }}
 
                 <a class="edit" v-on:click="next">
                   <w-icon class="mr1" xs color="grey">
                     fa fa-arrow-right
                   </w-icon>
                 </a>
-
               </div>
               <div class="xs4 pa1">
                 <a class="edit" v-on:click="dialog.show = true" title="Edit">
@@ -58,9 +78,16 @@
       v-model="dialog.show"
       title="Edit content"
       persistent
-      :width="700"
+      fullscreen
+      dark
+      transition="fade"
     >
-      <w-textarea outline ref="userContent" :model-value="content"></w-textarea>
+      <w-textarea
+        outline
+        cols="20"
+        ref="userContent"
+        :model-value="content"
+      ></w-textarea>
       <template #actions>
         <div class="spacer" />
         <w-button class="mr2" @click="dialog.show = false" bg-color="error">
@@ -99,7 +126,10 @@ export default {
     content: "",
     items: [],
     currentIndex: 0,
+    flipping: false,
     flipped: false,
+    windowWidth: window.innerWidth,
+    windowHeight: window.innerHeight,
   }),
   computed: {
     currentTranslation() {
@@ -109,7 +139,11 @@ export default {
       return (this.items[this.currentIndex] || {}).original;
     },
     flipWidth() {
-      const size = Math.min(window.innerWidth - 30, 500);
+      const size = Math.min(this.windowWidth - 30, 500);
+      return `${size}px`;
+    },
+    flipHeight() {
+      const size = Math.min(this.windowHeight - 100);
       return `${size}px`;
     },
   },
@@ -117,6 +151,10 @@ export default {
     this.content = localStorage.getItem("content");
     this.items = prepareItems(this.content);
     window.addEventListener("keydown", this.listenKey);
+    window.addEventListener("resize", () => {
+      this.windowWidth = window.innerWidth;
+      this.windowHeight = window.innerHeight;
+    });
   },
   methods: {
     save() {
@@ -126,6 +164,7 @@ export default {
       this.items = prepareItems(this.content);
     },
     shuffle() {
+      this.flipping = true;
       this.flipped = false;
       const min = 0;
       const max = this.items.length;
@@ -134,26 +173,31 @@ export default {
         while (index === this.currentIndex) {
           index = Math.floor(Math.random() * (max - min) + min);
         }
-        setTimeout(() => this.currentIndex = index, 400);
+        setTimeout(() => (this.currentIndex = index), 400);
+        setTimeout(() => (this.flipping = false), 400);
       }
     },
     previous() {
+      this.flipping = true;
       this.flipped = false;
       const max = this.items.length - 1;
       let newIndex = this.currentIndex - 1;
       if (newIndex < 0) {
         newIndex = max;
       }
-      setTimeout(() => this.currentIndex = newIndex, 400);
+      setTimeout(() => (this.currentIndex = newIndex), 400);
+      setTimeout(() => (this.flipping = false), 400);
     },
     next() {
+      this.flipping = true;
       this.flipped = false;
       const max = this.items.length - 1;
       let newIndex = this.currentIndex + 1;
       if (newIndex > max) {
         newIndex = 0;
       }
-      setTimeout(() => this.currentIndex = newIndex, 400);
+      setTimeout(() => (this.currentIndex = newIndex), 400);
+      setTimeout(() => (this.flipping = false), 400);
     },
     listenKey(key) {
       if (this.dialog.show === true) {
@@ -176,7 +220,7 @@ export default {
           this.dialog.show = true;
           break;
       }
-    }
+    },
   },
 };
 </script>
@@ -218,11 +262,19 @@ export default {
 }
 
 .w-card__title {
-  font-size: 1.0em !important;
+  font-size: 0.8em !important;
+  justify-content: center;
 }
 
 .edit {
   cursor: pointer;
 }
 
+.w-textarea--filled {
+  height: 100%;
+}
+
+.w-overlay {
+  backdrop-filter: blur(40px);
+}
 </style>

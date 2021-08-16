@@ -1,5 +1,5 @@
 {
-  "name": "card-shuffler",
+  "name": "simple-card-flipper",
   "version": "0.1.0",
   "private": true,
   "scripts": {
